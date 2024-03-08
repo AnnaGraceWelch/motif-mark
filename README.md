@@ -9,6 +9,13 @@ This splicing decision is made in part by **splicing factors**, proteins that bi
 
 Due to this, visualizing the location of specific motifs that these proteins bind to can potentially help explain how splicing events are being regulated in transcripts. 
 
+
+
+
+
+
+
+
 ## motif-mark-oop.py
 
 This Python script takes a FASTA file containing transcript reads and a text file containing motif sequences as input. 
@@ -16,6 +23,9 @@ This Python script takes a FASTA file containing transcript reads and a text fil
 Within the FASTA file, introns are denoted with lowercase letters while exons are shown as uppercase. 
 
 The final output is a png image visualizing the location of each motif on each transcript. Introns are shown as a black line spanning the length of the sequence, and exons are visualized as black rectangles above the sequence line. Motifs are lines drawn underneath the sequence line, with the respective color of the line designating which motif is at that position. The legend shows which colors correspond to which motif in the motif file. 
+## bioinfo_functions.py
+
+This module contains several helpful functions to be used to solve bioinformatics problems. Specifically, for this project it contains the function ```oneline_fasta```, which converts a FASTA file into two lines for each read: a header line and a sequence line. This module must be in the same directory as motif-mark-oop.py for that script to run. 
 ## Usage/Examples
 
 To use the code in this repository, pycairo must be installed in a conda environment, and that environment must be activated. 
