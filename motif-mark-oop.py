@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Author: Anna Grace Welch
+# Date: 03/07/2024
 
 '''This script takes a FASTA file with sequences (less than or equal to 1000 bases) and a text with one motif (less than or equal to 10 bases) per line
 and outputs a .png image diagramming location of specific motifs in file as well as introns and exons.'''
@@ -11,9 +12,9 @@ import cairo
 import re
 from bioinfo_functions import oneline_fasta
 
-
+###################################################################################################################################################################################################################
 #Classes
-###################################################################################################################################################################
+###################################################################################################################################################################################################################
 
 class Transcript:
     def __init__(self, sequence: Read, count, motifs):
@@ -79,10 +80,11 @@ class Exon:
 
 
 class Image:
-    def __init__(self):
+    def __init__(self, title):
         '''Initializes an Image class object.'''
-        self.surface = cairo.SVGSurface('motif_mark.svg', 1100, 1100)
+        self.surface = cairo.SVGSurface(f'{title}.svg', 1100, 1100)
         self.context = cairo.Context(self.surface)
+        self.title = title
         
         #set background color as white
         self.context.save()
@@ -91,13 +93,13 @@ class Image:
         self.context.restore()
     
 
-    def write_title(self, title):
+    def write_title(self):
         '''Writes the title of the Image onto the surface.'''
         self.context.set_source_rgb(0, 0, 0)
         self.context.set_font_size(40)
         self.context.select_font_face('Arial')
         self.context.move_to(100, 75)
-        self.context.show_text(title)
+        self.context.show_text(self.title)
 
     def draw_sequence(self, transcript: Transcript):
         '''Assigns a transcript as an attribute of the Image object and draws the sequence of the transcript onto the image along with the header of the sequence as a label.'''
@@ -107,8 +109,6 @@ class Image:
         self.context.set_line_width(10)
         self.context.set_source_rgb(0, 0, 0)
         self.context.rectangle(100, self.transcript.count * 200, len(self.transcript.sequence.sequence), 1)
-        # self.context.move_to(100, self.transcript.count * 200)
-        # self.context.line_to(len(self.transcript.sequence.sequence), self.transcript.count * 200)
         self.context.stroke()
         self.context.save()
 
@@ -122,6 +122,7 @@ class Image:
     def draw_legend(self):
         '''Draws the legend of the Image object denoting which Motif sequences correspond to which colors drawn on the transcript's sequence.'''
         count = 1
+        #draw legend for motifs
         for motif in self.transcript.motifs:
             self.context.set_source_rgb(*motif.color)
             self.context.rectangle(825, 20 * (count * 2), 10, 10)
@@ -133,6 +134,29 @@ class Image:
             self.context.set_font_size(30)
             self.context.show_text(motif.sequence)
             count += 1
+        #draw legend for exon
+        self.context.set_source_rgb(0, 0, 0)
+        self.context.rectangle(825, 20 * (count * 2), 10, 10)
+        self.context.fill()
+        self.context.stroke()
+
+        self.context.rectangle(820, 20 * (count * 2) + 10, 20, 5)
+        self.context.fill()
+        self.context.stroke()
+
+        self.context.move_to(850, 20 * (count * 2) + 10)
+        self.context.set_font_size(30)
+        self.context.show_text('Exon')
+        count += 1
+
+        #draw legend for intron
+        self.context.rectangle(820, 20 * (count * 2) + 10, 20, 5)
+        self.context.fill()
+        self.context.stroke()
+
+        self.context.move_to(850, 20 * (count * 2) + 10)
+        self.context.set_font_size(30)
+        self.context.show_text('Intron')
 
     def draw_exon(self):
         '''Draws the Exon object on the correct position of the sequence in the Image.'''
@@ -155,19 +179,19 @@ class Image:
 
         
 
-    def write_to_png(self):
+    def write_to_png(self, title):
         '''Writes the Image to a .png file.'''
-        self.surface.write_to_png('motif_mark.png')
+        self.surface.write_to_png(f'{title}.png')
 
 
     
     
-
+###################################################################################################################################################################################################################
 #Functions
 ###################################################################################################################################################################################################################       
         
     
-# def main():
+
 
 def get_args():
     '''This function parses the command line arguments inputting FASTA file and motifs file.'''
@@ -176,7 +200,7 @@ def get_args():
     parser.add_argument('-m', '--motifs_file', help='What is the name of the file with motifs?')
     return parser.parse_args()
 
-def load_motifs():
+def load_motifs(motif_file):
     '''This function parses the motif file inputted, and creates motif objects contaning a regex, length, and count attribute for each motif in the file.'''
     degenerate_bases = {
     'A': '[A]',
@@ -204,7 +228,7 @@ def load_motifs():
         5: (1, 0, 1)    #Pink
     }
     motifs = []
-    with open(args.motifs_file) as file:
+    with open(motif_file) as file:
         count = 0
         for line in file:
             count += 1
@@ -219,45 +243,49 @@ def load_motifs():
         return motifs
 
 
-args = get_args()
+###################################################################################################################################################################################################################       
 
-#convert input FASTA file so each read is two lines: header and sequence
-oneline_fasta(args.fasta_file, f'{args.fasta_file}.oneline')
+def main():
 
-match = re.search(r'(.+?)\.[^\.]+$', args.fasta_file)
-title = match.group(1)
+    args = get_args()
 
-motifs = load_motifs()
-image = Image()
+    #convert input FASTA file so each read is two lines: header and sequence
+    oneline_fasta(args.fasta_file, f'{args.fasta_file}.oneline')
 
-with open(f'{args.fasta_file}.oneline') as input:
-    count = 0
-    for line in input:
-        line = line.strip()
-        if line.startswith('>'):
-            header = re.search(r'\>(\S+)\s\S+(?:\(.+\))?', line)
-            sequence = Read(header.group(1))
+    match = re.search(r'\/(.+?)\.[^\.]+$', args.fasta_file)
+    title = match.group(1)
+
+    motifs = load_motifs(args.motifs_file)
+    image = Image(title)
+
+    with open(f'{args.fasta_file}.oneline') as input:
+        count = 0
+        for line in input:
+            line = line.strip()
+            if line.startswith('>'):
+                header = re.search(r'\>(\S+)\s\S+(?:\(.+\))?', line)
+                sequence = Read(header.group(1))
+                
+            else: 
+                count += 1
+                sequence.get_sequence(line)
+                transcript = Transcript(sequence, count, motifs)
+                transcript.find_motifs()
+                transcript.find_exon()
+                image.draw_sequence(transcript)
+                image.draw_exon()
+                image.draw_motifs()
+                        
+
             
-        else: 
-            count += 1
-            sequence.get_sequence(line)
-            transcript = Transcript(sequence, count, motifs)
-            transcript.find_motifs()
-            transcript.find_exon()
-            image.draw_sequence(transcript)
-            image.draw_exon()
-            image.draw_motifs()
-                    
-
-        
-image.draw_legend()
-image.write_title(title)
-image.write_to_png()
+    image.draw_legend()
+    image.write_title()
+    image.write_to_png(title)
         
 
 
-# if __name__ == 'main':
-#     main()
+if __name__ == '__main__':
+    main()
 
 
 
