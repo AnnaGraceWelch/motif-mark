@@ -32,7 +32,8 @@ To use the code in this repository, pycairo must be installed in a conda environ
 
 Then the script motif-mark-oop.py can be run on the command line with two required arguments.
 
-#### Creating a Conda Environment / Installing Pycairo
+
+### Creating a Conda Environment / Installing Pycairo
 
 Create a conda environment.
 
@@ -53,7 +54,8 @@ conda install -c conda-forge pycairo
 
 This conda environment must be activated for the motif-mark-oop.py to work. 
 
-#### Running motif-mark-oop.py
+
+### Running motif-mark-oop.py
 
 The script [motif-mark-oop.py](motif-mark-oop.py) has two required arguments to run. These are detailed in the table below.
 
