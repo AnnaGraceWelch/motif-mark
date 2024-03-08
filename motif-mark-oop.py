@@ -17,6 +17,7 @@ from bioinfo_functions import oneline_fasta
 ###################################################################################################################################################################################################################
 
 class Transcript:
+    '''This class contains information about a sequence read (a Read class object), the count of the transcript in the file, and the motifs present on a sequence.'''
     def __init__(self, sequence: Read, count, motifs):
         '''This method initializes a class object with a sequence read (header and sequence), a count, and list of motifs as attributes.'''
         self.sequence = sequence
@@ -43,6 +44,7 @@ class Transcript:
 
             
 class Read:
+    '''This class contains information about a read including header line, sequence, length of sequence, and label to be used when drawing the sequence.'''
     def __init__(self, header):
         '''This method initializes a Read class object with a header as an attribute.'''
         self.header = header
@@ -56,6 +58,8 @@ class Read:
 
 
 class Motif:
+    '''This class contains information about a motif, including sequence, regular expression for ambiguous nucleotides, length, assigned color, count of motif in the file, 
+    and position of motif on a sequence.'''
     def __init__(self, sequence, regex, length, color, count):
         '''This method initializes a Motif class object with a sequence, regular expression, length, and color as attributes.'''
         self.sequence = sequence
@@ -73,6 +77,7 @@ class Motif:
        
 
 class Exon:
+    '''This class contains information about an exon, including position on sequence and length.'''
     def __init__(self, position, length):
         '''Initializes an Exon class object with a position and length as attributes.'''
         self.position = position
@@ -80,6 +85,7 @@ class Exon:
 
 
 class Image:
+    '''This class contains information about an Image, including the title to be drawn, and the surface and context to be used with pycairo.'''
     def __init__(self, title):
         '''Initializes an Image class object.'''
         self.surface = cairo.SVGSurface(f'{title}.svg', 1100, 1100)
@@ -249,32 +255,38 @@ def main():
 
     args = get_args()
 
-    #convert input FASTA file so each read is two lines: header and sequence
-    oneline_fasta(args.fasta_file, f'{args.fasta_file}.oneline')
 
-    match = re.search(r'\/(.+?)\.[^\.]+$', args.fasta_file)
+    oneline_fasta(args.fasta_file, f'{args.fasta_file}.oneline')    #convert input FASTA file so each read is two lines: header and sequence
+
+
+    match = re.search(r'\/(.+?)\.[^\.]+$', args.fasta_file) #capture title for image object
     title = match.group(1)
 
-    motifs = load_motifs(args.motifs_file)
-    image = Image(title)
 
-    with open(f'{args.fasta_file}.oneline') as input:
+    motifs = load_motifs(args.motifs_file)  #load motifs from motifs file
+
+
+    image = Image(title)    #initialize image object   
+
+
+    with open(f'{args.fasta_file}.oneline') as input:   #loop through fasta file
         count = 0
         for line in input:
             line = line.strip()
-            if line.startswith('>'):
-                header = re.search(r'\>(\S+)\s\S+(?:\(.+\))?', line)
+            if line.startswith('>'):    #check if header line
+                header = re.search(r'\>(\S+)\s\S+(?:\(.+\))?', line)    #capture header to assign to read object
                 sequence = Read(header.group(1))
                 
             else: 
                 count += 1
-                sequence.get_sequence(line)
-                transcript = Transcript(sequence, count, motifs)
-                transcript.find_motifs()
-                transcript.find_exon()
-                image.draw_sequence(transcript)
-                image.draw_exon()
-                image.draw_motifs()
+                sequence.get_sequence(line)  #add sequence to read object
+                transcript = Transcript(sequence, count, motifs) #initialize transcript object with Read object, count of sequence in file, and list of Motif objects
+                transcript.find_motifs()    #find positions of motifs in transcript
+                transcript.find_exon()  #find position of exon in transcript
+                image.draw_sequence(transcript) #draw line for length of sequence
+                image.draw_exon()   #draw rectangle for exon on top of sequence
+                image.draw_motifs() #draw motif lines below sequence
+
                         
 
             
